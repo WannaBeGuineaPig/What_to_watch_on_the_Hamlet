@@ -1,3 +1,8 @@
+__all__ = [
+    'ClassificationMessage'
+]
+
+import asyncio
 from googletrans import Translator
 from transformers import AutoTokenizer
 from gliclass import GLiClassModel, ZeroShotClassificationPipeline
@@ -14,8 +19,8 @@ class ClassificationMessage:
             "negative" : 'Негативный'
         }
     
-    async def get_predict(self, text: str) -> str:
-        english_text = await self.translate_text(text)
+    def get_predict(self, text: str) -> str:
+        english_text = asyncio.run(self.translate_text(text))
         results = self.pipeline(english_text, self.labels, prompt=self.prompt, threshold=0.5)[0]
         accuracy_type, type_text = self.find_classification_predict(results)
         return {
