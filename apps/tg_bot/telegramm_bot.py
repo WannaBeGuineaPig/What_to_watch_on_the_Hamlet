@@ -1,6 +1,7 @@
 import asyncio
 import os
 import random
+import aiohttp
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -12,12 +13,22 @@ from aiogram.fsm.storage.memory import MemoryStorage
 # Загружаем переменные окружения из .env файла
 load_dotenv()
 
-# Получаем токен из переменных окружения
+# Получаем токены из переменных окружения
 TOKEN = os.getenv('BOT_TOKEN')
+KINOPOISK_API_KEY = os.getenv('KINOPOISK_API_KEY')  # Новый ключ
 
-# Проверяем, что токен загружен
+# Проверяем, что токены загружены
 if not TOKEN:
-    raise ValueError("Токен не найден! Создай файл .env с BOT_TOKEN=твой_токен")
+    raise ValueError("Токен бота не найден! Создай файл .env с BOT_TOKEN=твой_токен")
+if not KINOPOISK_API_KEY:
+    raise ValueError("API ключ Кинопоиска не найден! Добавь KINOPOISK_API_KEY в .env файл")
+
+# API конфигурация для Kinopoisk API Unofficial
+API_URL = "https://kinopoiskapiunofficial.tech/api/v2.2/films"
+HEADERS = {
+    "X-API-KEY": KINOPOISK_API_KEY,
+    "Content-Type": "application/json"
+}
 
 # Создаем экземпляры бота и диспетчера
 bot = Bot(token=TOKEN)
@@ -41,11 +52,103 @@ MOVIE_FACTS = [
     "🎬 Самый прибыльный фильм — «Ведьма из Блэр» (снят за 60 000$, собрал 248 млн $)",
     "🍿 Более 80% фильмов, выходящих в прокат, не окупаются в кинотеатрах",
     "🎭 Актеры озвучки «Симпсонов» зарабатывают по 300 000$ за серию",
+    "🎬 Самый кассовый фильм 2023 года — «Барби» (1.4 миллиарда $)",
+    "📽️ Фильм «Аватар: Путь воды» снимали 13 лет",
+    "🎭 Леонардо ДиКаприо получил свой первый «Оскар» только через 22 года после начала карьеры",
+    "🍿 Самый дорогой эпизод в истории ТВ стоит 15 млн $ — финал «Игры престолов»",
 ]
 
 # Функция для получения случайного факта
 def get_random_movie_fact():
     return random.choice(MOVIE_FACTS)
+
+# Функция для поиска фильмов через Kinopoisk API Unofficial
+async def search_movies(query: str, limit: int = 5):
+    """
+    Поиск фильмов по названию через Kinopoisk API Unofficial
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Параметры запроса
+            params = {
+                "keyword": query,  # Поиск по ключевому слову
+                "page": 1,
+                "order": "RATING",  # Сортировка по рейтингу
+                "type": "FILM"  # Ищем только фильмы (не сериалы)
+            }
+            
+            async with session.get(API_URL, headers=HEADERS, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("items", [])[:limit]
+                else:
+                    print(f"Ошибка API: {response.status}")
+                    if response.status == 401:
+                        print("Проверь API ключ - он может быть недействительным")
+                    elif response.status == 429:
+                        print("Слишком много запросов. Лимит 20 запросов в секунду")
+                    return []
+    except Exception as e:
+        print(f"Ошибка при запросе к API: {e}")
+        return []
+
+# Функция для форматирования информации о фильме (адаптирована под Kinopoisk API)
+def format_movie_info(movie, gender: str, fact: str = None):
+    """
+    Форматирует информацию о фильме для отправки пользователю
+    """
+    # Основная информация из Kinopoisk API
+    name_ru = movie.get('nameRu', 'Название неизвестно')
+    name_en = movie.get('nameEn', '')
+    name_original = movie.get('nameOriginal', '')
+    year = movie.get('year', 'Год неизвестен')
+    rating = movie.get('ratingKinopoisk', 'Нет рейтинга')
+    description = movie.get('description', 'Описание отсутствует')
+    film_length = movie.get('filmLength', 'Неизвестно')
+    kinopoisk_id = movie.get('kinopoiskId', '')
+    
+    # Формируем полное название
+    if name_en and name_en != name_ru:
+        full_name = f"{name_ru} / {name_en}"
+    elif name_original and name_original != name_ru:
+        full_name = f"{name_ru} / {name_original}"
+    else:
+        full_name = name_ru
+    
+    # Жанры
+    genres = [g.get('genre') for g in movie.get('genres', [])[:3]]
+    genres_str = ', '.join(genres) if genres else 'Не указаны'
+    
+    # Страны
+    countries = [c.get('country') for c in movie.get('countries', [])[:2]]
+    countries_str = ', '.join(countries) if countries else 'Не указаны'
+    
+    # Формируем сообщение в зависимости от пола
+    if gender == "male":
+        header = f"🎯 Ара, нашёл для тебя!\n\n"
+    else:
+        header = f"🎯 Джан, нашла для тебя!\n\n"
+    
+    # Основной блок информации
+    movie_info = (
+        f"📽️ **{full_name}**\n"
+        f"📅 **Год:** {year}\n"
+        f"⭐ **Рейтинг КП:** {rating}\n"
+        f"🌍 **Страна:** {countries_str}\n"
+        f"🎭 **Жанры:** {genres_str}\n"
+        f"⏱️ **Длительность:** {film_length} мин.\n"
+        f"🔗 **Ссылка:** https://www.kinopoisk.ru/film/{kinopoisk_id}/\n\n"
+        f"📝 **Описание:**\n{description[:300]}{'...' if len(description) > 300 else ''}\n\n"
+    )
+    
+    # Добавляем случайный факт если есть
+    if fact:
+        movie_info += f"⚡ **Кстати:** {fact}\n\n"
+    
+    # Инструкция для последнего фильма
+    movie_info += "Можешь попробовать найти другой фильм или узнать ещё факт!"
+    
+    return header + movie_info
 
 # Определяем состояния для FSM (Finite State Machine)
 class UserState(StatesGroup):
@@ -157,7 +260,18 @@ async def help_handler(message: types.Message, state: FSMContext):
         "🔹 **Команды:**\n"
         "/start - Главное меню\n"
         "/exit - Выход из диалога\n\n"
-        "📽️ В базе {} интересных фактов о кино!".format(len(MOVIE_FACTS))
+        f"📽️ В базе {len(MOVIE_FACTS)} интересных фактов о кино!\n\n"
+        "🎬 **Поиск фильмов:**\n"
+        "Бот ищет фильмы через Kinopoisk API Unofficial и показывает:\n"
+        "- Название (русское и оригинальное)\n"
+        "- Год выпуска\n"
+        "- Рейтинг Кинопоиска\n"
+        "- Страна производства\n"
+        "- Жанры\n"
+        "- Длительность\n"
+        "- Описание\n"
+        "- Постер (если есть)\n"
+        "- Ссылку на Кинопоиск"
     )
     
     # Проверяем текущее состояние для правильного меню
@@ -213,54 +327,84 @@ async def process_gender(message: types.Message, state: FSMContext):
 @dp.message(UserState.waiting_for_movie)
 async def process_movie_search(message: types.Message, state: FSMContext):
     # Обработка кнопок во время поиска
-    if message.text == "🎬 Новый поиск":
-        await message.answer(
-            "Выбери свой пол:",
-            reply_markup=get_gender_keyboard()
-        )
-        await state.set_state(UserState.waiting_for_gender)
-        return
-    elif message.text == "🚪 Выход":
-        await exit_bot(message, state)
-        return
-    elif message.text == "❓ Помощь":
-        await help_handler(message, state)
-        return
-    elif message.text == "🎲 Ещё факт":
-        await more_fact_handler(message, state)
+    if message.text in ["🎬 Новый поиск", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт"]:
+        if message.text == "🎬 Новый поиск":
+            await message.answer(
+                "Выбери свой пол:",
+                reply_markup=get_gender_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_gender)
+        elif message.text == "🚪 Выход":
+            await exit_bot(message, state)
+        elif message.text == "❓ Помощь":
+            await help_handler(message, state)
+        elif message.text == "🎲 Ещё факт":
+            await more_fact_handler(message, state)
         return
     
     # Получаем данные пользователя
     user_data = await state.get_data()
     gender = user_data.get("gender", "unknown")
     
-    # Получаем случайный факт
-    random_fact = get_random_movie_fact()
+    # Отправляем сообщение о начале поиска
+    searching_msg = await message.answer(
+        "🔍 Ищу фильмы на Кинопоиске... Это может занять несколько секунд.",
+        reply_markup=get_movie_search_keyboard()
+    )
     
-    # Заглушка для поиска фильмов (пока без API)
-    movie_name = message.text
+    # Поиск фильмов через API
+    query = message.text
+    movies = await search_movies(query)
     
-    # Разные ответы в зависимости от пола
-    if gender == "male":
-        response = (
-            f"🎯 Ара, отличный выбор!\n\n"
-            f"Ты ищешь: \"{movie_name}\"\n"
-            f"Джан, я уже ищу этот фильм для тебя... 🔍\n\n"
-            f"⚡ Пока ищу, лови интересный факт:\n"
-            f"**{random_fact}**\n\n"
-            f"Можешь попробовать найти другой фильм или узнать ещё факт!"
-        )
-    else:
-        response = (
-            f"🎯 Джан, прекрасный выбор!\n\n"
-            f"Ты ищешь: \"{movie_name}\"\n"
-            f"Сирун, я уже ищу этот фильм для тебя... 🔍\n\n"
-            f"⚡ Пока ищу, лови интересный факт:\n"
-            f"**{random_fact}**\n\n"
-            f"Можешь попробовать найти другой фильм или узнать ещё факт!"
-        )
+    # Удаляем сообщение о поиске
+    await searching_msg.delete()
     
-    await message.answer(response, reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
+    if not movies:
+        # Получаем случайный факт
+        random_fact = get_random_movie_fact()
+        
+        # Если ничего не нашли
+        if gender == "male":
+            response = (
+                f"😕 Ара, по запросу \"{query}\" ничего не нашлось на Кинопоиске.\n\n"
+                f"Попробуй изменить запрос или поищи что-то другое!\n\n"
+                f"⚡ А пока лови факт:\n**{random_fact}**"
+            )
+        else:
+            response = (
+                f"😕 Джан, по запросу \"{query}\" ничего не нашлось на Кинопоиске.\n\n"
+                f"Попробуй изменить запрос или поищи что-то другое!\n\n"
+                f"⚡ А пока лови факт:\n**{random_fact}**"
+            )
+        
+        await message.answer(response, reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
+        return
+    
+    # Отправляем результаты (до 3 фильмов)
+    for i, movie in enumerate(movies[:3]):
+        # Получаем случайный факт только для первого фильма
+        random_fact = get_random_movie_fact() if i == 0 else None
+        
+        formatted_info = format_movie_info(movie, gender, random_fact)
+        
+        # Отправляем фото, если есть
+        poster = movie.get('posterUrl')
+        if poster:
+            await message.answer_photo(
+                photo=poster,
+                caption=formatted_info,
+                reply_markup=get_movie_search_keyboard() if i == len(movies[:3]) - 1 else ReplyKeyboardRemove(),
+                parse_mode="Markdown"
+            )
+        else:
+            await message.answer(
+                formatted_info,
+                reply_markup=get_movie_search_keyboard() if i == len(movies[:3]) - 1 else ReplyKeyboardRemove(),
+                parse_mode="Markdown"
+            )
+        
+        # Небольшая задержка между сообщениями
+        await asyncio.sleep(0.5)
 
 # Обработчик команды /exit
 @dp.message(Command("exit"))
@@ -315,6 +459,7 @@ async def handle_other_messages(message: types.Message, state: FSMContext):
 async def main():
     print("🎬 КиноBот запущен...")
     print(f"📽️ В базе {len(MOVIE_FACTS)} фактов о кино")
+    print(f"🔑 Kinopoisk API Unofficial подключен")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
