@@ -2,6 +2,7 @@ import asyncio
 import os
 import random
 import aiohttp
+from finished_model.request_to_model import RequestModel
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -9,6 +10,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
+import requests
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -24,6 +26,8 @@ if not KINOPOISK_API_KEY:
     raise ValueError("API ключ Кинопоиска не найден! Добавь KINOPOISK_API_KEY в .env файл")
 
 # API конфигурация для Kinopoisk API Unofficial
+API_TRANSFORMER_URL = "http://127.0.0.1:8000/predict-type-message?message="
+
 API_URL = "https://kinopoiskapiunofficial.tech/api/v2.2/films"
 HEADERS = {
     "X-API-KEY": KINOPOISK_API_KEY,
@@ -34,6 +38,9 @@ HEADERS = {
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
+
+
+model = RequestModel()
 
 # База фактов о кино
 MOVIE_FACTS = [
@@ -154,13 +161,16 @@ def format_movie_info(movie, gender: str, fact: str = None):
 class UserState(StatesGroup):
     waiting_for_gender = State()
     waiting_for_movie = State()
+    waiting_for_find_movie = State()
+    waiting_for_type_message = State()
 
 # Главное меню
 def get_main_menu_keyboard():
     buttons = [
-        [KeyboardButton(text="🎬 Найти фильм")],
-        [KeyboardButton(text="🎲 Случайный факт"), KeyboardButton(text="❓ Помощь")],
-        [KeyboardButton(text="🚪 Выход")]
+        [KeyboardButton(text="🎬 Найти фильм"), KeyboardButton(text="Подбор фильма")],
+        [KeyboardButton(text="🎲 Случайный факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="Определение тональности")],
+        [KeyboardButton(text="🚪 Выход")],
+        # [KeyboardButton(text="Подборка фильма")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
     return keyboard
@@ -178,8 +188,8 @@ def get_gender_keyboard():
 # Клавиатура во время поиска фильмов
 def get_movie_search_keyboard():
     buttons = [
-        [KeyboardButton(text="🎬 Новый поиск")],
-        [KeyboardButton(text="🎲 Ещё факт"), KeyboardButton(text="❓ Помощь")],
+        [KeyboardButton(text="🎬 Новый поиск"), KeyboardButton(text="Подбор фильма")],
+        [KeyboardButton(text="🎲 Ещё факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="Определение тональности")],
         [KeyboardButton(text="🚪 Выход")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -213,6 +223,15 @@ async def find_movie_start(message: types.Message, state: FSMContext):
         reply_markup=get_gender_keyboard()
     )
     await state.set_state(UserState.waiting_for_gender)
+
+# Обработчик главного меню
+@dp.message(lambda message: message.text == "Подбор фильма")
+async def find_movie_start(message: types.Message, state: FSMContext):
+    await message.answer(
+        "Введити текст для побора фильма по предпочтениям:",
+        reply_markup=get_main_menu_keyboard()
+    )
+    await state.set_state(UserState.waiting_for_find_movie)
 
 # Обработчик случайного факта
 @dp.message(lambda message: message.text == "🎲 Случайный факт")
@@ -323,11 +342,9 @@ async def process_gender(message: types.Message, state: FSMContext):
     
     await state.set_state(UserState.waiting_for_movie)
 
-# Обработчик поиска фильма
-@dp.message(UserState.waiting_for_movie)
-async def process_movie_search(message: types.Message, state: FSMContext):
-    # Обработка кнопок во время поиска
-    if message.text in ["🎬 Новый поиск", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт"]:
+@dp.message(UserState.waiting_for_type_message)
+async def process_type_message(message: types.Message, state: FSMContext):
+    if message.text in ["🎬 Новый поиск", "Подбор фильма", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
         if message.text == "🎬 Новый поиск":
             await message.answer(
                 "Выбери свой пол:",
@@ -340,6 +357,84 @@ async def process_movie_search(message: types.Message, state: FSMContext):
             await help_handler(message, state)
         elif message.text == "🎲 Ещё факт":
             await more_fact_handler(message, state)
+        elif message.text == "Определение тональности":
+            await message.answer(
+                "Введите сообщение:",
+                reply_markup=get_main_menu_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_type_message)
+        return
+    
+    result = send_request_type_message(message.text)
+    await message.answer(
+        f"Тип комментария: {result['russian_type_message']}\n Точность: {result['accuracy']}",
+        reply_markup=get_movie_search_keyboard(),
+    )
+
+def send_request_type_message(input_text: str):
+    return requests.get(API_TRANSFORMER_URL + input_text).json()
+
+@dp.message(UserState.waiting_for_find_movie)
+async def process_movie_find(message: types.Message, state: FSMContext):
+    if message.text in ["🎬 Найти фильм", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
+        if message.text == "🎬 Найти фильм":
+            await message.answer(
+                "Выбери свой пол:",
+                reply_markup=get_gender_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_gender)
+
+        elif message.text == "🚪 Выход":
+            await exit_bot(message, state)
+        elif message.text == "❓ Помощь":
+            await help_handler(message, state)
+        elif message.text == "🎲 Ещё факт":
+            await more_fact_handler(message, state)
+        elif message.text == "Определение тональности":
+            await message.answer(
+                "Введите сообщение:",
+            )
+            await state.set_state(UserState.waiting_for_type_message)
+        return
+    
+    result = model.request_model(message.text)
+
+    await asyncio.sleep(1)
+    await message.answer(result, reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
+
+# Обработчик поиска фильма
+@dp.message(UserState.waiting_for_movie)
+async def process_movie_search(message: types.Message, state: FSMContext):
+    # Обработка кнопок во время поиска
+    if message.text in ["🎬 Новый поиск", 'Подбор фильма', "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
+        if message.text == "🎬 Новый поиск":
+            await message.answer(
+                "Выбери свой пол:",
+                reply_markup=get_gender_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_gender)
+        elif message.text == "🎬 Новый поиск":
+            await message.answer(
+                "Введити текст для побора фильма по предпочтениям: ",
+                reply_markup=get_main_menu_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_find_movie)
+        elif message.text == "🚪 Выход":
+            await exit_bot(message, state)
+        elif message.text == "❓ Помощь":
+            await help_handler(message, state)
+        elif message.text == "🎲 Ещё факт":
+            await more_fact_handler(message, state)
+        elif message.text == "Определение тональности":
+            await message.answer(
+                "Введите сообщение:",
+            )
+            await state.set_state(UserState.waiting_for_type_message)
+        return
+    
+    query = message.text
+    if (send_request_type_message(query)['russian_type_message'] == 'Негативный'):
+        await message.answer('Ара, нельзя так!!!', reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
         return
     
     # Получаем данные пользователя
@@ -353,7 +448,6 @@ async def process_movie_search(message: types.Message, state: FSMContext):
     )
     
     # Поиск фильмов через API
-    query = message.text
     movies = await search_movies(query)
     
     # Удаляем сообщение о поиске
@@ -433,6 +527,7 @@ async def exit_bot(message: types.Message, state: FSMContext):
     # Очищаем состояние пользователя
     await state.clear()
 
+
 # Обработчик кнопки "✨ Начать общение" после выхода
 @dp.message(lambda message: message.text == "✨ Начать общение")
 async def start_new_chat(message: types.Message, state: FSMContext):
@@ -449,6 +544,13 @@ async def handle_other_messages(message: types.Message, state: FSMContext):
         await help_handler(message, state)
     elif message.text == "🎲 Случайный факт":
         await random_fact_handler(message, state)
+        await help_handler(message, state)
+    elif message.text == "Определение тональности":
+        await message.answer(
+            "Введите сообщение: ",
+            reply_markup=get_main_menu_keyboard()
+        )
+        await state.set_state(UserState.waiting_for_type_message)
     else:
         await message.answer(
             "Используй меню для навигации или нажми /start",
