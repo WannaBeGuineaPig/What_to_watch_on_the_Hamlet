@@ -65,9 +65,97 @@ MOVIE_FACTS = [
     "🍿 Самый дорогой эпизод в истории ТВ стоит 15 млн $ — финал «Игры престолов»",
 ]
 
+# Армянские выражения для разных ситуаций
+ARMENIAN_PHRASES = {
+    "male": {
+        "negative": [
+            "Ара джан, у нас в горах так не разговаривают! Будь вежлив, уважай старших и чти традиции. Я тебя прощаю по-армянски щедро, даю ещё шанс найти фильм, только говори красиво, как настоящий джан! 🌋",
+            "Вах, вах, ара! Что за тон? Ты же не на базаре! Будь культурным, у нас так не принято. Держи ещё попытку, только по-человечески проси! 🤝",
+            "Джан, ну зачем так грубо? Армяне - народ вежливый и гостеприимный. Давай по-хорошему, найду тебе самый лучший фильм! 🎬",
+            "Ара, ты чего такой сердитый? Прям как турки в 1915! Остынь, будь человеком, уважай собеседника. Вот тебе шанс, проси нормально! 😊"
+        ],
+        "searching": [
+            "Ара, дай пару минут, сейчас подберу для тебя самый лучший фильм! 🎬",
+            "Джан, секундочку, ищу для тебя кино по душе! 🔍",
+            "Ара, не торопи, сейчас найдём что-то стоящее! ⏳",
+            "Вах, сейчас сделаем красивую подборку, джан! 🎯"
+        ],
+        "greeting": "Ара, джан!",
+        "farewell": "Бари луйс, джан!",
+        "thanks": "Мерси, ара!"
+    },
+    "female": {
+        "negative": [
+            "Джан, сирун, зачем такие слова? Ты же девушка - цветочек! Будь нежной и вежливой, как армянская девушка. Я тебя прощаю по-сестрински, даю ещё шанс найти фильм! 🌸",
+            "Вах, джан! Красивая девушка должна красиво разговаривать! Давай ещё раз, но по-хорошему, как в лучших армянских семьях принято! 💫",
+            "Сирун, ну что за тон? У нас в Армении девушки - как розы, нежные и вежливые. Будь как армянская царевна, попроси красиво! 👑",
+            "Джан, не расстраивай меня! Ты же умница и красавица, зачем такие слова? Давай по-новой, но культурно, с душой! ❤️"
+        ],
+        "searching": [
+            "Джан, сирун, дай пару минут, подберу для тебя самое красивое кино! 🎬",
+            "Вах, сейчас найдём для тебя, дорогая! 🔍",
+            "Сирун, секундочку, ищу фильм специально для тебя! 💫",
+            "Джан, потерпи немного, готовлю лучшую подборку! ⏳"
+        ],
+        "greeting": "Джан, сирун!",
+        "farewell": "Бари луйс, сирун!",
+        "thanks": "Шноракалутюн!"
+    },
+    "unknown": {
+        "negative": [
+            "Уважаемый, в Армении принято общаться с душой и уважением! Будьте вежливы, прошу вас. Даю шанс исправиться и найти фильм! 🌋",
+            "Вах, дорогой! Не надо так грубо. Армяне - народ гостеприимный, но требуют уважения. Попробуйте ещё раз, но по-человечески! 🤝",
+            "У нас в горах так не общаются! Будьте культурны и вежливы, и я помогу найти лучший фильм. Даю ещё попытку! 🎬"
+        ],
+        "searching": [
+            "Дай пару минут, сейчас подберу фильм! 🎬",
+            "Секундочку, ищу для вас кино! 🔍",
+            "Минуточку, готовлю подборку! ⏳"
+        ],
+        "greeting": "Барев дзез!",
+        "farewell": "Бари луйс!",
+        "thanks": "Мерси!"
+    }
+}
+
 # Функция для получения случайного факта
 def get_random_movie_fact():
     return random.choice(MOVIE_FACTS)
+
+# Функция для получения армянского ответа на негатив
+def get_armenian_negative_response(gender: str) -> str:
+    """Возвращает случайный армянский ответ для негативного сообщения в зависимости от пола"""
+    if gender not in ARMENIAN_PHRASES:
+        gender = "unknown"
+    return random.choice(ARMENIAN_PHRASES[gender]["negative"])
+
+# Функция для получения сообщения о поиске
+def get_searching_message(gender: str, search_type: str = "movie") -> str:
+    """
+    Возвращает сообщение о поиске в зависимости от пола и типа поиска
+    search_type: "movie" - для поиска фильма, "recommendation" - для подборки
+    """
+    if gender not in ARMENIAN_PHRASES:
+        gender = "unknown"
+    
+    if search_type == "recommendation":
+        return random.choice(ARMENIAN_PHRASES[gender]["searching"])
+    else:
+        # Для обычного поиска фильма
+        if gender == "male":
+            return random.choice([
+                "Ара, сейчас поищу на Кинопоиске! 🔍",
+                "Джан, секунду, проверяю базу фильмов! 🎬",
+                "Ара, дай пару минут, найдём твой фильм! ⏳"
+            ])
+        elif gender == "female":
+            return random.choice([
+                "Джан, сейчас поищу для тебя! 🔍",
+                "Сирун, секундочку, проверяю фильмы! 🎬",
+                "Джан, дай пару минут, найдём твой фильм! ⏳"
+            ])
+        else:
+            return "🔍 Ищу фильмы на Кинопоиске... Это может занять несколько секунд."
 
 # Функция для поиска фильмов через Kinopoisk API Unofficial
 async def search_movies(query: str, limit: int = 5):
@@ -167,8 +255,8 @@ class UserState(StatesGroup):
 # Главное меню
 def get_main_menu_keyboard():
     buttons = [
-        [KeyboardButton(text="🎬 Найти фильм"), KeyboardButton(text="Подбор фильма")],
-        [KeyboardButton(text="🎲 Случайный факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="Определение тональности")],
+        [KeyboardButton(text="🎬 Найти фильм"), KeyboardButton(text="🎬 Подбор фильма")],
+        [KeyboardButton(text="🎲 Случайный факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="😊 Определение тональности")],
         [KeyboardButton(text="🚪 Выход")],
         # [KeyboardButton(text="Подборка фильма")]
     ]
@@ -188,8 +276,8 @@ def get_gender_keyboard():
 # Клавиатура во время поиска фильмов
 def get_movie_search_keyboard():
     buttons = [
-        [KeyboardButton(text="🎬 Новый поиск"), KeyboardButton(text="Подбор фильма")],
-        [KeyboardButton(text="🎲 Ещё факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="Определение тональности")],
+        [KeyboardButton(text="🎬 Новый поиск"), KeyboardButton(text="🎬 Подбор фильма")],
+        [KeyboardButton(text="🎲 Ещё факт"), KeyboardButton(text="❓ Помощь"), KeyboardButton(text="😊 Определение тональности")],
         [KeyboardButton(text="🚪 Выход")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -224,11 +312,11 @@ async def find_movie_start(message: types.Message, state: FSMContext):
     )
     await state.set_state(UserState.waiting_for_gender)
 
-# Обработчик главного меню
-@dp.message(lambda message: message.text == "Подбор фильма")
+# Обработчик главного меню - Подбор фильма
+@dp.message(lambda message: message.text == "🎬 Подбор фильма")
 async def find_movie_start(message: types.Message, state: FSMContext):
     await message.answer(
-        "Введити текст для побора фильма по предпочтениям:",
+        "Дорогой, ты объясни мне как умеешь, чё хочешь посмотреть, а там да-да нет-нет, посмотрим, может получиться, а может и нет",
         reply_markup=get_main_menu_keyboard()
     )
     await state.set_state(UserState.waiting_for_find_movie)
@@ -290,7 +378,13 @@ async def help_handler(message: types.Message, state: FSMContext):
         "- Длительность\n"
         "- Описание\n"
         "- Постер (если есть)\n"
-        "- Ссылку на Кинопоиск"
+        "- Ссылку на Кинопоиск\n\n"
+
+        "Нажми '🎬 Подбор фильма' для поиска\n"
+        "- Опишите фильм \n"
+        "- Опишите больше деталей о фильме \n"
+        "- Отправьте сообщение боту \n"
+        "Бот исходя из вашего описания к фильму, будет искать его на площадке 'Кинопоиск' \n"
     )
     
     # Проверяем текущее состояние для правильного меню
@@ -344,7 +438,7 @@ async def process_gender(message: types.Message, state: FSMContext):
 
 @dp.message(UserState.waiting_for_type_message)
 async def process_type_message(message: types.Message, state: FSMContext):
-    if message.text in ["🎬 Новый поиск", "Подбор фильма", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
+    if message.text in ["🎬 Новый поиск", "🎬 Подбор фильма", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", '😊 Определение тональности']:
         if message.text == "🎬 Новый поиск":
             await message.answer(
                 "Выбери свой пол:",
@@ -357,7 +451,7 @@ async def process_type_message(message: types.Message, state: FSMContext):
             await help_handler(message, state)
         elif message.text == "🎲 Ещё факт":
             await more_fact_handler(message, state)
-        elif message.text == "Определение тональности":
+        elif message.text == "😊 Определение тональности":
             await message.answer(
                 "Введите сообщение:",
                 reply_markup=get_main_menu_keyboard()
@@ -374,48 +468,62 @@ async def process_type_message(message: types.Message, state: FSMContext):
 def send_request_type_message(input_text: str):
     return requests.get(API_TRANSFORMER_URL + input_text).json()
 
+# Обработчик подбора фильма по предпочтениям
 @dp.message(UserState.waiting_for_find_movie)
 async def process_movie_find(message: types.Message, state: FSMContext):
-    if message.text in ["🎬 Найти фильм", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
-        if message.text == "🎬 Найти фильм":
-            await message.answer(
-                "Выбери свой пол:",
-                reply_markup=get_gender_keyboard()
-            )
-            await state.set_state(UserState.waiting_for_gender)
-
-        elif message.text == "🚪 Выход":
-            await exit_bot(message, state)
-        elif message.text == "❓ Помощь":
-            await help_handler(message, state)
-        elif message.text == "🎲 Ещё факт":
-            await more_fact_handler(message, state)
-        elif message.text == "Определение тональности":
-            await message.answer(
-                "Введите сообщение:",
-            )
-            await state.set_state(UserState.waiting_for_type_message)
-        return
-    
-    result = model.request_model(message.text)
-
-    await asyncio.sleep(1)
-    await message.answer(result, reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
-
-# Обработчик поиска фильма
-@dp.message(UserState.waiting_for_movie)
-async def process_movie_search(message: types.Message, state: FSMContext):
-    # Обработка кнопок во время поиска
-    if message.text in ["🎬 Новый поиск", 'Подбор фильма', "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", 'Определение тональности']:
+    if message.text in ["🎬 Новый поиск", "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", '😊 Определение тональности']:
         if message.text == "🎬 Новый поиск":
             await message.answer(
                 "Выбери свой пол:",
                 reply_markup=get_gender_keyboard()
             )
             await state.set_state(UserState.waiting_for_gender)
-        elif message.text == "🎬 Новый поиск":
+        elif message.text == "🚪 Выход":
+            await exit_bot(message, state)
+        elif message.text == "❓ Помощь":
+            await help_handler(message, state)
+        elif message.text == "🎲 Ещё факт":
+            await more_fact_handler(message, state)
+        elif message.text == "😊 Определение тональности":
             await message.answer(
-                "Введити текст для побора фильма по предпочтениям: ",
+                "Введите сообщение:",
+            )
+            await state.set_state(UserState.waiting_for_type_message)
+        return
+    
+    # Получаем данные пользователя для персонализированного сообщения
+    user_data = await state.get_data()
+    gender = user_data.get("gender", "unknown")
+    
+    # Отправляем сообщение о начале подбора с армянским колоритом
+    searching_msg = await message.answer(
+        get_searching_message(gender, "recommendation"),
+        reply_markup=get_movie_search_keyboard()
+    )
+    
+    # Вызываем модель для подбора фильма
+    result = model.request_model(message.text)
+    
+    # Удаляем сообщение о поиске
+    await searching_msg.delete()
+    
+    # Отправляем результат
+    await message.answer(result, reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
+
+# Обработчик поиска фильма
+@dp.message(UserState.waiting_for_movie)
+async def process_movie_search(message: types.Message, state: FSMContext):
+    # Обработка кнопок во время поиска
+    if message.text in ["🎬 Новый поиск", '🎬 Подбор фильма', "🚪 Выход", "❓ Помощь", "🎲 Ещё факт", '😊 Определение тональности']:
+        if message.text == "🎬 Новый поиск":
+            await message.answer(
+                "Выбери свой пол:",
+                reply_markup=get_gender_keyboard()
+            )
+            await state.set_state(UserState.waiting_for_gender)
+        elif message.text == "🎬 Подбор фильма":
+            await message.answer(
+                "Введи текст для подбора фильма по предпочтениям: ",
                 reply_markup=get_main_menu_keyboard()
             )
             await state.set_state(UserState.waiting_for_find_movie)
@@ -425,7 +533,7 @@ async def process_movie_search(message: types.Message, state: FSMContext):
             await help_handler(message, state)
         elif message.text == "🎲 Ещё факт":
             await more_fact_handler(message, state)
-        elif message.text == "Определение тональности":
+        elif message.text == "😊 Определение тональности":
             await message.answer(
                 "Введите сообщение:",
             )
@@ -433,9 +541,6 @@ async def process_movie_search(message: types.Message, state: FSMContext):
         return
     
     query = message.text
-    if (send_request_type_message(query)['russian_type_message'] == 'Негативный'):
-        await message.answer('Ара, нельзя так!!!', reply_markup=get_movie_search_keyboard(), parse_mode="Markdown")
-        return
     
     # Получаем данные пользователя
     user_data = await state.get_data()
@@ -443,9 +548,30 @@ async def process_movie_search(message: types.Message, state: FSMContext):
     
     # Отправляем сообщение о начале поиска
     searching_msg = await message.answer(
-        "🔍 Ищу фильмы на Кинопоиске... Это может занять несколько секунд.",
+        get_searching_message(gender, "movie"),
         reply_markup=get_movie_search_keyboard()
     )
+    
+    # Проверяем тональность сообщения
+    try:
+        tone_result = send_request_type_message(query)
+        if tone_result['russian_type_message'] == 'Негативный':
+            # Получаем армянский ответ на негатив
+            negative_response = get_armenian_negative_response(gender)
+            
+            # Удаляем сообщение о поиске
+            await searching_msg.delete()
+            
+            # Отправляем армянский ответ
+            await message.answer(
+                negative_response,
+                reply_markup=get_movie_search_keyboard(),
+                parse_mode="Markdown"
+            )
+            return
+    except Exception as e:
+        print(f"Ошибка при проверке тональности: {e}")
+        # Продолжаем поиск даже если проверка тональности не удалась
     
     # Поиск фильмов через API
     movies = await search_movies(query)
@@ -544,8 +670,7 @@ async def handle_other_messages(message: types.Message, state: FSMContext):
         await help_handler(message, state)
     elif message.text == "🎲 Случайный факт":
         await random_fact_handler(message, state)
-        await help_handler(message, state)
-    elif message.text == "Определение тональности":
+    elif message.text == "😊 Определение тональности":
         await message.answer(
             "Введите сообщение: ",
             reply_markup=get_main_menu_keyboard()
