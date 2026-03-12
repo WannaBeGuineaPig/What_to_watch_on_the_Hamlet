@@ -3,7 +3,7 @@
 
 ## Справка проекта
 ### Что использовалось в проекте:
-* API для поиска фильмов - . Данная API доступна в свободном доступе для поиска фильмов и сериалов в онлайн-кинотеатре «Кинопоиск[![logo_kinopoisk](https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg)](https://www.kinopoisk.ru/)»;
+* API для поиска фильмов - kinopoisk-dev. Данная API доступна в свободном доступе для поиска фильмов и сериалов в онлайн-кинотеатре «Кинопоиск[![logo_kinopoisk](https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg)](https://www.kinopoisk.ru/)»;
 * Модель искусственного интелекта - Deepseek;
 * Определение тональности сообщение(Трансформер) - gliclass(классификация текста);
 * Система контроля версий - Git.
