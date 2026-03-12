@@ -10,30 +10,30 @@
 
 ### подтверждение использования системы контроля версий (Git) и удаленного репозитория (GitHub)
 На рисунке ниже изображено - ветки репозитория↓
-![BranchesGit](./docs/image/branches_git.png)
+![BranchesGit](./image/branches_git.png)
 На рисунке ниже изображено - коммиты репозитория в ветке «main»↓
-![CommitMain](./docs/image/commit_main.png)
-![CommitMain](./docs/image/commit_main_2.png)
+![CommitMain](./image/commit_main.png)
+![CommitMain](./image/commit_main_2.png)
 На рисунке ниже изображено - коммиты репозитория в ветке «API_transformer»↓
-![CommitAPITransformer](./docs/image/commit_api_transformer.png)
+![CommitAPITransformer](./image/commit_api_transformer.png)
 На рисунке ниже изображено - коммиты репозитория в ветке finished_model»↓
-![CommitFinishedModel](./docs/image/commit_finished_model.png)
+![CommitFinishedModel](./image/commit_finished_model.png)
 На рисунке ниже изображено - коммиты репозитория в ветке«tg_bot»↓
-![CommitTgBot](./docs/image/commit_tg_bot.png)
+![CommitTgBot](./image/commit_tg_bot.png)
 
 ## Возможности программы
 На рисунке ниже изображено - начальное окно↓
-![StartWindow](./docs/image/start_window.png)
+![StartWindow](./image/start_window.png)
 На рисунке ниже изображено - Справка по командам↓
-![HelpCommand](./docs/image/help.png)
+![HelpCommand](./image/help.png)
 На рисунке ниже изображено - случайный факт об киноиндустрии↓
-![RandomFact](./docs/image/random_fact.png)
+![RandomFact](./image/random_fact.png)
 На рисунке ниже изображено - определение тональности сообщения↓
-![TypeMessage](./docs/image/type_message.png)
+![TypeMessage](./image/type_message.png)
 На рисунке ниже изображено - подбор фильма по предпочтениям↓
-![FindMovieOnPreferences](./docs/image/find_movie_preferences.png)
+![FindMovieOnPreferences](./image/find_movie_preferences.png)
 На рисунке ниже изображено - подбор фильма по кинопоиску↓
-![FindMovieOnPreferences](./docs/image/find_movie_kinopoisk.png)
+![FindMovieOnPreferences](./image/find_movie_kinopoisk.png)
 
 ## Описание коммитов
 | Название | Описание                                                        |
