@@ -24,14 +24,19 @@
 ## Возможности программы
 На рисунке ниже изображено - начальное окно↓
 ![StartWindow](./image/start_window.png)
+
 На рисунке ниже изображено - Справка по командам↓
 ![HelpCommand](./image/help.png)
+
 На рисунке ниже изображено - случайный факт об киноиндустрии↓
 ![RandomFact](./image/random_fact.png)
+
 На рисунке ниже изображено - определение тональности сообщения↓
 ![TypeMessage](./image/type_message.png)
+
 На рисунке ниже изображено - подбор фильма по предпочтениям↓
 ![FindMovieOnPreferences](./image/find_movie_preferences.png)
+
 На рисунке ниже изображено - подбор фильма по кинопоиску↓
 ![FindMovieOnPreferences](./image/find_movie_kinopoisk.png)
 
